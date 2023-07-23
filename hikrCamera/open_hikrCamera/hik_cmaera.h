@@ -92,6 +92,8 @@ public:
     int grab_image();
 
     void get_image(Mat &M);
+    void get_image_slow(Mat &M);
+
 
     int no_data_times = 0;
     string m_name = "camera";
