@@ -204,7 +204,7 @@ int HikCamera::grab_image(){
     return 1;
 }
 
-void HikCamera::get_image(Mat &M){
+void HikCamera::get_image_slow(Mat &M){
     nRet = MV_CC_GetOneFrameTimeout(handle, pData, nDataSize, &stImageInfo, 1000);
     if (nRet == MV_OK)
     {
@@ -222,6 +222,29 @@ void HikCamera::get_image(Mat &M){
         cout<<"error pixel type!!!"<<endl;
     }
 }
+
+void HikCamera::get_image(Mat &M){
+    MV_FRAME_OUT stOutFrame = {0};
+    memset(&stOutFrame, 0, sizeof(MV_FRAME_OUT));
+    nRet = MV_CC_GetImageBuffer(handle, &stOutFrame, 1000);
+    if (nRet == MV_OK)
+    {
+        // printf("GetOneFrame, Width[%d], Height[%d], nFrameNum[%d]\n", 
+        // stImageInfo.nWidth, stImageInfo.nHeight, stImageInfo.nFrameNum);
+    }
+    else{
+        printf("No data[%x]\n", nRet);
+        no_data_times++;
+    }
+    if(stOutFrame.stFrameInfo.enPixelType == PixelType_Gvsp_BGR8_Packed && stOutFrame.pBufAddr != nullptr){
+        M = cv::Mat(stOutFrame.stFrameInfo.nHeight, stOutFrame.stFrameInfo.nWidth, CV_8UC3, stOutFrame.pBufAddr).clone();
+        nRet = MV_CC_FreeImageBuffer(handle, &stOutFrame);
+    }
+    else{
+        cout<<"error pixel type or frame is nullptr!!!"<<endl;
+    }
+}
+
 
 void HikCamera::close_camera(){
     // 停止取流
